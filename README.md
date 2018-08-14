@@ -48,7 +48,7 @@ Since we want last layer have the same dimension with the input we have to upsam
 Each layer of convolution network carry different informations such as edges, shapes... If we upsample from only last layer of encoder part, we will lose information from these layers. By skip connections we get information from previous convolutional layers into upsampling.
 
 ### Fully Convoltional Layout
-<img width="400" alt="Fully Convoltional Layout" src="/imgs/FCN_layout.JPG">
+<img width="800" alt="Fully Convoltional Layout" src="/imgs/FCN_layout.JPG">
 
 Fully Convoltional Networks consists two parts, Encoder and Decoder. Since encoder part is similar to any convolutional network we can use pre-trained ones with transfer learning and add decoder part to create a FCN.
 
@@ -87,6 +87,35 @@ Applying 1x1 convolution and transpose. We will repeat this for each layer we ar
     #The second output is the output of a layer further back in the network, typically a pooling layer.
     l7_l4_sum = tf.add(l7_conv_1x1_transpose,l4_conv_1x1)
 ```
+## Result: 
+
+| Epoch         | Batch           | Learning Rate  |
+| ------------- |---------------| -----|
+|2 |4 | 0.01|
+|2 |64| 0.01|
+|2 |16 | 0.01|
+|10 |16| 0.0001|
+|10 |16| 0.001|
+|15 |16| 0.001|
+|5 |8| 0.001|
+|20 |8| 0.001|
+|50 |8| 0.001|
+|20 |2| 0.001|
+|10 |6| 0.0008|
+|40 |6| 0.0008|
+
+In the vanilla neural networks we prefer 64-128 batches to achieve low loss. Unlike vanilla NN Fully convolutional NN's are not good with high batches. So lowered batches over my trials.
+
+<img width="800" alt="High batch causes artifacts" src="/imgs/high_batch_problems.png">
+
+When learning rate is higher, smoothness of the classified road decreases. 
+
+<img width="800" alt="High batch causes artifacts" src="/imgs/learning_rate_diff.png">
+
+Larger epochs also helps with better learning but after few epochs accuracy does not increase.
+
+### Result Images:
+https://drive.google.com/open?id=1AiOxwipxF37PQjiGBcNkop_44ail7w7O
 
 <img width="800" alt="Semantic Segmantation with Fully Convolutional Network" src="/imgs/semantic_segmantation.gif">
 

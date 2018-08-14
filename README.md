@@ -31,18 +31,62 @@ If we want to know where is an object in a given image fully connected layers wo
 
 3 techniques used by FCN's:
 
-1. Replace fully connected layers with 1x1 convolutional layers
+1. Replace fully connected layers with 1x1 convolutional layers:
+
+This will let us have 4D tensor instead of a flattened 2D tensor, so spatial information will be preserved.
 <img width="400" alt="1x1 Convolutional Layers" src="/imgs/1x1 convolutional.JPG">
+
 
 2. Upsampling through the use of transposed convolutional layers
 <img width="400" alt="Upsampling" src="/imgs/upsampling.JPG">
 
+Since we want last layer have the same dimension with the input we have to upsample layers. Stride will give the multiplier of previous layer to next layer. So if we want to upsample 3x3 input to 6x6, stride should be 6/3 = 2. 
+
 3. Skip Connections
 <img width="400" alt="Skip Connections" src="/imgs/skip_connections.JPG">
 
+Each layer of convolution network carry different informations such as edges, shapes... If we upsample from only last layer of encoder part, we will lose information from these layers. By skip connections we get information from previous convolutional layers into upsampling.
 
+### Fully Convoltional Layout
+<img width="400" alt="Fully Convoltional Layout" src="/imgs/FCN_layout.JPG">
 
+Fully Convoltional Networks consists two parts, Encoder and Decoder. Since encoder part is similar to any convolutional network we can use pre-trained ones with transfer learning and add decoder part to create a FCN.
 
+Getting the input third, fourth and last layer from encoder part for skipping.
+```python
+    w1 = graph.get_tensor_by_name(vgg_input_tensor_name)
+    keep_prob = graph.get_tensor_by_name(vgg_keep_prob_tensor_name)
+    w3 = graph.get_tensor_by_name(vgg_layer3_out_tensor_name)
+    w4 = graph.get_tensor_by_name(vgg_layer4_out_tensor_name)
+    w7 = graph.get_tensor_by_name(vgg_layer7_out_tensor_name)
+```
+
+Since we already have a pre-trained network we do not have to run all over the network. We will prevent encoder layers from being trained.
+```python
+    vgg_layer7_out = tf.stop_gradient(vgg_layer7_out)
+    vgg_layer4_out = tf.stop_gradient(vgg_layer4_out)
+    vgg_layer3_out = tf.stop_gradient(vgg_layer3_out)
+```
+
+Applying 1x1 convolution and transpose. We will repeat this for each layer we are using from encoder.
+```python
+    # L7 -> L4    
+    # 1x1 Convolution of vgg layer 7
+    l7_conv_1x1 = tf.layers.conv2d(vgg_layer7_out, num_classes , 1, padding='SAME'
+        ,kernel_initializer= tf.random_normal_initializer(stddev=0.01)
+        , kernel_regularizer = tf.contrib.layers.l2_regularizer(1e-03))     
+    l7_conv_1x1_transpose = tf.layers.conv2d_transpose(l7_conv_1x1, num_classes, 4, strides = 2, padding = 'SAME'
+        , kernel_regularizer = tf.contrib.layers.l2_regularizer(1e-03))
+
+    # 1x1 Convolution of vgg layer 4
+    l4_conv_1x1 = tf.layers.conv2d(vgg_layer4_out, num_classes , 1, padding='SAME'
+        ,kernel_initializer= tf.random_normal_initializer(stddev=0.01)
+        , kernel_regularizer = tf.contrib.layers.l2_regularizer(1e-03))   
+
+    #Combine the output of two layers. The first output is the output of the current layer.
+    #The second output is the output of a layer further back in the network, typically a pooling layer.
+    l7_l4_sum = tf.add(l7_conv_1x1_transpose,l4_conv_1x1)
+```
 
 <img width="800" alt="Semantic Segmantation with Fully Convolutional Network" src="/imgs/semantic_segmantation.gif">
 

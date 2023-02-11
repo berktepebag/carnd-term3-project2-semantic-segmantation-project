@@ -1,3 +1,6 @@
+
+### *** Archieved: As this repo is and will not updated anymore, it is archieved. ***
+
 # Semantic Segmentation with Fully Convolutional Networks
 
 ### Introduction
